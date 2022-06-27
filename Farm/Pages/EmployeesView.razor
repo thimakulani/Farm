@@ -1,0 +1,40 @@
+﻿@page "/employees_page"
+@layout MainLayout
+@inject IModalDialogService ModalDialog
+
+<div class="card">
+    <div class="card-header">
+        <h3>EMPLOYEES</h3>
+    </div>
+    <div class="card-body">
+        <div>
+            <a class="btn btn-primary text-decoration-none" @onclick="@OpenDialog">
+                <span class="oi oi-plus" aria-hidden="true"></span> ADD PRODUCT
+            </a>
+        </div>
+    </div>
+
+
+</div>
+<style>
+    #target {
+        height: 500px;
+    }
+</style>
+
+
+@code {
+    private bool Visibility { get; set; } = false;
+    private UserModel user = new UserModel();
+    private async void OpenDialog()
+    {
+        Visibility = true;
+        //Dictionary<string, object> data = null;
+        //await DialogService.OpenAsync<AddEmployee>("Order",data, new DialogOptions() { Width = "700px", Height = "570px", Resizable = true, Draggable = true });
+        ModalDialogResult result = await ModalDialog.ShowDialogAsync<AddEmployee>("ADD EMPLOYEE");
+        
+    }
+
+
+
+}

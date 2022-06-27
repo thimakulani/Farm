@@ -1,0 +1,24 @@
+﻿@inherits LayoutComponentBase
+
+<div class="page">
+	<div class="sidebar">
+		<NavMenu />
+	</div>
+	<ModalDialogContainer />
+	<main>
+		<div class="top-row px-4">
+			<a class="btn-sm btn-danger text-decoration-none text-white" href="AuthanticationLayout.razor" @onclick="@Logout">Logout</a>
+		</div>
+
+		<article class="content px-4">
+			@Body
+		</article>
+	</main>
+</div>
+@code{
+	private void Logout()
+	{
+		Preferences.Clear("token");
+		//NavigationManager.NavigateTo("/");
+	}
+}

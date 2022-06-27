@@ -1,0 +1,70 @@
+﻿@page "/customers_page"
+@layout MainLayout
+
+<div class="card">
+    <div class="card-header">
+        <h5>CUSTOMERS</h5>
+    </div>
+    <div class="card-body">
+        @if (customers == null)
+        {
+            <p><em>Loading...</em></p>
+        }
+        else
+        {
+
+            <div class="table-responsive">
+                <table class="table">
+                <thead>
+                    <tr>
+                        <th>Id#</th>
+                        <th>Name</th>
+                        <th>Last Name</th>
+                        <th>Email</th>
+                        <th>Contact</th>
+
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in customers)
+                    {
+                        <tr>
+                            <td>@item.Id</td>
+                            <td>@item.FirstName</td>
+                            <td>@item.LastName</td>
+                            <td>@item.Email</td>
+                            <td>@item.Phone</td>
+                        </tr>
+                    }
+
+                </tbody>
+            </table>
+            </div>
+        }
+
+
+
+    </div>
+</div>
+@code {
+    private List<Customer> customers = new();
+    protected async override Task OnInitializedAsync()
+    {
+
+        try
+        {
+            HttpClient httpClient = new HttpClient();
+            var response = await httpClient.GetAsync("https://farm-web-api.herokuapp.com/api/Customers/");
+        if (response.IsSuccessStatusCode)
+        {
+            var data = await response.Content.ReadAsStringAsync();
+            customers = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Customer>>(data);
+        }
+        }
+        catch (Exception ex)
+        {
+            await JsRuntime.InvokeVoidAsync("Error", $"{ex.Message}");
+        }
+
+    }
+}

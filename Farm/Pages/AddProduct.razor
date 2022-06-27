@@ -1,0 +1,99 @@
+﻿@page "/add_product"
+@using System.Text
+@layout MainLayout
+@inject IJSRuntime JsRuntime
+@inject NavigationManager NavigationManager
+
+<div class="card">
+    <div class="card-header">
+        <h4>Add Product</h4>
+    </div>
+
+    <div class="card-body">
+    <EditForm OnValidSubmit="@Submit" Model="@products">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    
+    <div class="form-group">
+        <label for="Name">Name</label>
+        <InputText @bind-Value="products.Name" class="form-control" id="name" />
+    </div>
+
+    <div class="form-group">
+        <label for="Type">SELECT CATEGORY</label>
+        
+
+        <select id="category" required name="category" @onchange="SelectedItem"  class="form-select form-select-sm mt-3">
+            @foreach (var state in category)
+            {
+                <option  value="@state.Id">@state.Name</option>
+            }
+        </select>
+   
+    </div>
+
+    <div class="form-group">
+        <label for="Description">Description</label>
+        <InputText id="Description" @bind-Value="products.Description" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label for="Price">Price</label>
+       <InputNumber id="Price" @bind-Value="products.Price" class="form-control"/>
+    </div>
+    <div class="form-group">
+        <label for="Quantity">Quantity</label>
+        <InputNumber id="Quantity" @bind-Value="products.Quantity" class="form-control"/>
+    </div>
+    <div class="form-group mt-2">
+         <input type="submit" class="btn btn-primary" value="Save" />
+    </div>
+</EditForm>
+    </div>
+
+</div>
+
+@code {
+    private List<Category> category = new();
+    private Products products= new Products();
+    private int category_id;
+    private async void Submit()
+    {
+        if (category_id == 0)
+        {
+            category_id = category[0].Id;
+        }
+        products.CategoryId = category_id;
+        //var x = category.Find(d => d.Id == category_id);
+
+        HttpClient httpClient = new HttpClient();
+
+        var json = Newtonsoft.Json.JsonConvert.SerializeObject(products);
+        var response = await httpClient.PostAsync("https://farm-web-api.herokuapp.com/api/Products/", new StringContent(json, Encoding.UTF8, "application/json"));
+        if (response.IsSuccessStatusCode)
+        {
+            var msg = response.Content.ReadAsStringAsync();
+            NavigationManager.NavigateTo("products_page");
+        }
+        else{
+            var str_out = await response.Content.ReadAsStringAsync();
+            await JsRuntime.InvokeVoidAsync("Error", $"{str_out}");
+        }
+
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        HttpClient httpClient = new HttpClient();
+        var response = await httpClient.GetAsync("https://farm-web-api.herokuapp.com/api/Categories/");
+        if(response.IsSuccessStatusCode)
+        {
+            var results = await response.Content.ReadAsStringAsync();
+            category = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Category>>(results);
+
+        }
+    }
+    private void SelectedItem(ChangeEventArgs e)
+    {
+        category_id = Convert.ToInt32(e.Value.ToString());
+       // await JsRuntime.InvokeVoidAsync("Error", $"{category_id}");
+    }
+}

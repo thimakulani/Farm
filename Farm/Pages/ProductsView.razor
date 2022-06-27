@@ -1,0 +1,98 @@
+﻿@layout MainLayout
+@page "/products_page"
+@inject IJSRuntime JsRuntime
+<div class="card">
+    <div class="card-header">
+        <h3>PRODUCTS</h3>
+    </div>
+    <div class="card-body">
+		<div>
+			<a class="btn btn-primary text-decoration-none" href="add_product">
+						<span class="oi oi-plus" aria-hidden="true"></span> ADD PRODUCT
+			</a>
+		</div>
+		@if (products == null)
+		{
+				<p><em>Loading...</em></p>
+		}
+		else
+		{
+			<div class="table-responsive">
+				<table class="table">
+					<thead>
+						<tr>
+							<th>Id</th>
+							<th>Name</th>
+							<th>Category</th>
+							<th>Description</th>
+							<th>Price</th>
+							<th>Quantity</th>
+							<th>Action</th>
+						</tr>
+					</thead>
+					<tbody>
+						@foreach (var item in products)
+						{
+							<tr>
+								<td>@item.ProductId</td>
+								<td>@item.Name</td>
+								<td>@item.Category.Name</td>
+								<td>@item.Description</td>
+								<td>@item.Price</td>
+								<td>@item.Quantity</td>
+								<td>
+									<button class="btn-sm btn-danger" @onclick="() => DeleteProduct(item)">Delete
+										<i class="fa fa-trash-o fa-lg"></i>
+									</button>
+									
+								</td>
+							</tr>
+						}
+				
+			
+					</tbody>
+				</table>
+			</div>
+		}
+
+	</div>
+</div>
+
+
+
+@code {
+	List<Products> products = new ();
+	private string token = null;
+	protected override async Task OnInitializedAsync()
+	{
+		token = Preferences.Get("token", null);
+		HttpClient httpClient = new HttpClient();
+		
+		httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+		var response = await httpClient.GetAsync("https://farm-web-api.herokuapp.com/api/Products/");
+		if (response.IsSuccessStatusCode)
+		{
+			var data = await response.Content.ReadAsStringAsync();
+			if (data != null)
+			{
+				products = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Products>>(data);
+			}
+		}
+
+		
+	}
+	private async void DeleteProduct(Products product)
+	{
+		try
+		{
+			HttpClient httpClient = new HttpClient();
+			var response = await httpClient.DeleteAsync("https://farm-web-api.herokuapp.com/api/Products/" +product.ProductId.ToString());
+			await base.OnInitializedAsync();
+		}
+		catch (Exception ex)
+		{
+			await JsRuntime.InvokeVoidAsync("Error", $"{ex.Message}");
+		}
+	}
+
+}

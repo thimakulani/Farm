@@ -1,0 +1,99 @@
+﻿
+@layout MainLayout
+
+
+<div class="simple-form">
+    <EditForm Model="@user" OnValidSubmit="@Submit"> 
+        <ValidationSummary />
+        <DataAnnotationsValidator />
+        <label class="text-red" >@error</label>
+        <div class="form-group">
+            <label for="first-name">First Name</label>
+            <input @bind="user.FirstName" type="text" class="form-control" id="first-name" placeholder="Enter First Name" />
+        </div>
+
+        <div class="form-group">
+            <label for="last-name">Last Name</label>
+            <input @bind="user.LastName" type="text" class="form-control" id="last-name" placeholder="Enter Last Name" />
+        </div>
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input @bind="user.Email" type="email" class="form-control" id="email" placeholder="Enter Email" />
+        </div>
+        <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input @bind="user.Phone" type="text" class="form-control" id="phone" placeholder="Enter Phone Number" />
+        </div>
+        <div class="form-group">
+            <label for="role">Phone Number</label>
+            <select>
+                @foreach (var item in Role)
+                {
+                    <option value="@item.Name" />
+                }
+            </select>
+        </div>
+        <div class="form-group">
+            <input type="submit" value="CREATE" class="btn-sm btn-primary form-control" />
+        </div>
+    </EditForm>
+
+    
+</div>
+
+
+@code {
+
+    private UserModel user = new UserModel();
+    private string error = "";
+    private async void Submit()
+    {
+        user.Username = user.Email;
+        user.Password = "ABcd@12345";
+
+        var jsone = Newtonsoft.Json.JsonConvert.SerializeObject(user);
+        var content = new StringContent(jsone, Encoding.UTF8, "application/json");
+        HttpClient httpClient = new HttpClient();
+        try
+        {
+            var response = await httpClient.PostAsync("https://farm-web-api.herokuapp.com/api/Account/register", content);
+            if (response.IsSuccessStatusCode)
+            {
+                error = await response.Content.ReadAsStringAsync();
+            }
+            else
+            {
+                error = await response.Content.ReadAsStringAsync();
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            error = ex.Message;
+        }
+
+
+    }
+    
+    private List<Roles> Role = new List<Roles>();
+    protected async override void OnInitialized()
+    {
+        base.OnInitialized();
+        var httpClient = new HttpClient();
+        try
+        {
+            var results = await httpClient.GetAsync("https://farm-web-api.herokuapp.com/api/Roles");
+            if (results.IsSuccessStatusCode)
+            {
+                var str = await results.Content.ReadAsStringAsync();
+                Role = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Roles>>(str);
+            }
+        }
+        catch (Exception)
+        {
+            
+            throw;
+        }
+
+
+    }
+}

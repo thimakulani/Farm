@@ -1,0 +1,81 @@
+﻿@page "/"
+@using Farm.Models
+@using System.Text
+@layout AuthanticationLayout
+
+
+<section class="vh-100" >
+    <div class="container py-5 h-100">
+        <div class="row d-flex justify-content-center align-items-center h-100">
+            <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+                <div class="card shadow-2-strong" style="border-radius: 1rem;">
+                    <div class="card-body p-5">
+
+                        <h3 class="mb-5">Sign in</h3>
+
+                        <EditForm Model="@user" OnValidSubmit="@Submit">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary  />
+                            <label>@error</label>
+                            <div class="form-group">
+                                <label>EMAIL</label>
+                                <InputText  class="form-control" @bind-Value="@user.Username" id="Username" />
+                            </div>
+                            <div class="form-group">
+                                <label for="Name">PASSWORD</label>
+                                <RadzenPassword  class="form-control" @bind-Value="@user.Password" id="Password" />
+                            </div>
+                            <div class="form-group">
+                                @*<RadzenButton @onclick="@Submit" >LOGIN</RadzenButton>*@
+                                <input type="submit" class="btn-sm btn-primary  form-control" value="LOGIN" />
+                            </div>
+                        </EditForm>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    UserLogin user = new UserLogin();
+
+    string error;
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        user.Password = "THIma$!305";
+        user.Username = "thimakulani@gmail.com";
+    }
+    private async void Submit()
+    {
+        var json = Newtonsoft.Json.JsonConvert.SerializeObject(user);
+        HttpContent data = new StringContent(json, Encoding.UTF8, "application/json");
+        HttpClient httpClient = new HttpClient();
+
+
+        try
+        {
+
+            var results = await httpClient.PostAsync("https://farm-web-api.herokuapp.com/api/Account/login", data);
+            if (results.IsSuccessStatusCode)
+            {
+                string token = await results.Content.ReadAsStringAsync();
+                Preferences.Set("token", token);
+                NavigationManager.NavigateTo("index");
+
+            }
+            else
+            {
+                error = await results.Content.ReadAsStringAsync();
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            error = ex.Message;
+        }
+
+    }
+
+}

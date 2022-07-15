@@ -1,44 +1,56 @@
 ﻿@page "/categories_page"
-@layout MainLayout
+@using MudBlazor
+@layout DashboardLayout
+@inject IDialogService DialogService
+
+
 <div class="container">
-    
+    <a class="btn btn-primary" @onclick="@openDlg" style="text-decoration:none">
+        <span class="oi oi-plus" aria-hidden="true"></span> ADD CATEGORY
+    </a>
+    <div class="row">
+        @if (category == null)
+        {
 
-    <div class="card">
-       
-        <div class="card-header">
-             <h3>CATEGORIES</h3>
-            
-        </div>
-        <div class="card-body">
-            <a class="btn btn-primary" href="add_category" style="text-decoration:none">
-                <span class="oi oi-plus" aria-hidden="true"></span> ADD CATEGORY
-            </a>
-            <div class="row">
-                @if (category == null)
-                {
-
-                }
-                else
-                {
-                    @foreach (var item in category)
-                    {
-                        <div class="col mt-2">
-                            <div class="card" style="width: 18rem;">
-                                @*<img class="card-img-top" src="../Resources/Images/dotnet_bot.svg" >*@
-                                <div class="card-body">
-                                    <p class="card-text">Name: @item.Name.ToUpper()</p>
-                                    <h5 class="card-title">Id: @item.Id</h5>
-                                </div>
-                            </div>
+        }
+        else
+        {
+            @foreach (var item in category)
+            {
+                <div class="col-md-4 mt-1">
+                    <div class="card">
+                        @*<img class="card-img-top" src="../Resources/Images/dotnet_bot.svg" >*@
+                        <div class="card-body">
+                            <p class="card-text">@item.Name.ToUpper()</p>
+                            <h5 class="card-title">Id: @item.Id</h5>
                         </div>
-                    }
-                }
-            </div>
-        </div>
+                    </div>
+                </div>
+            }
+        }
     </div>
 </div>
+<MudDialog @bind-IsVisible="@is_open">
+    <DialogContent>
+        <EditForm OnInvalidSubmit="@Submit" Model="@cat">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="form-group">
+                <label for="Name">CATEGORY NAME</label>
+                <InputText id="Name" class="form-control" @bind-Value="cat.Name" />
+            </div>
+            <div class="form-group mt-2">
+                <input class="btn-sm btn-primary" type="submit" @onclick="@Submit" />
+            </div>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+
+    </DialogActions>
+</MudDialog>
 @code {
     private List<Category> category = new();
+    bool is_open = false;
     protected override async Task OnInitializedAsync()
     {
         HttpClient httpClient = new HttpClient();
@@ -54,6 +66,38 @@
         catch (Exception)
         {
 
+        }
+    }
+    private void openDlg()
+    {
+        is_open = true;
+
+    }
+    private Category cat = new();
+    private async void Submit()
+    {
+        var json = Newtonsoft.Json.JsonConvert.SerializeObject(cat);
+        HttpContent data = new StringContent(json, Encoding.UTF8, "application/json");
+        HttpClient httpClient = new HttpClient();
+
+        try
+        {
+            var response = await httpClient.PostAsync("https://farm-web-api.herokuapp.com/api/Categories", data);
+            if (response.IsSuccessStatusCode)
+            {
+                var message = await response.Content.ReadAsStringAsync();
+                category.Add(cat);
+                is_open = false;
+                StateHasChanged();
+            }
+            else
+            {
+                await App.Current.MainPage.DisplayAlert("Error", "Something went wrong!", "Got it");
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", $"Something went wrong! \n{ex.Message}", "Got it");
         }
     }
 }

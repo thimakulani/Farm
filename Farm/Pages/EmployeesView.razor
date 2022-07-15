@@ -1,40 +1,221 @@
 ﻿@page "/employees_page"
-@layout MainLayout
+@using System.Collections.ObjectModel
+@using MudBlazor
+@layout DashboardLayout
 @inject IModalDialogService ModalDialog
 
-<div class="card">
-    <div class="card-header">
-        <h3>EMPLOYEES</h3>
-    </div>
+<div style="height:100vh">
     <div class="card-body">
         <div>
-            <a class="btn btn-primary text-decoration-none" @onclick="@OpenDialog">
-                <span class="oi oi-plus" aria-hidden="true"></span> ADD PRODUCT
-            </a>
+            <button class="btn-sm m-2 btn-primary text-decoration-none text-white" @onclick="@OpenDlg">
+                <span class="oi oi-plus" aria-hidden="true"></span> ADD EMPLOYEE
+            </button>
         </div>
+
+        <div class="col-12">
+            <div class="card" style="height:100vh">
+                <!-- /.card-header -->
+                <div class="card-body table-responsive p-0">
+                    <MudSimpleTable Hover="true" Dense="true" FixedHeader="true" Elevation="4" Style="overflow-x: auto; height:80vh">
+                        <thead>
+                            <tr>
+                                <td>Firstname</td>
+                                <td>Lastname</td>
+                                <td>Email</td>
+                                <td>Phone Number</td>
+                                <td>Role</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            
+                            @foreach (var context in applicationUsers)
+                            {
+                                <tr>
+                                    <td>@context.FirstName</td>
+                                    <td>@context.LastName</td>
+                                    <td>@context.Email</td>
+                                    <td>@context.PhoneNumber</td>
+                                    <td>@context.RoleName</td>
+                                </tr>
+                            }
+                        </tbody>
+                       
+                    </MudSimpleTable>
+
+                  
+                </div>
+                <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+        </div>
+
+
     </div>
 
-
 </div>
-<style>
-    #target {
-        height: 500px;
-    }
-</style>
+<MudDialog @bind-IsVisible="@dialogIsOpen">
+    
+    <DialogContent>
+        <div>
+
+        </div>
+        <EditForm Model="@user" OnValidSubmit="@Submit">
+            <div class="row" >
+
+                <ValidationSummary />
+                <DataAnnotationsValidator />
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="first-name">First Name</label>
+                        <input @bind="user.FirstName" type="text" class="form-control" id="first-name" placeholder="Enter First Name" />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="last-name">Last Name</label>
+                        <input @bind="user.LastName" type="text" class="form-control" id="last-name" placeholder="Enter Last Name" />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input @bind="user.Email" type="email" class="form-control" id="email" placeholder="Enter Email" />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input @bind="user.Phone" type="text" class="form-control" id="phone" placeholder="Enter Phone Number" />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="role">User Role</label>
+                        <select @onchange="SelectedItem" class="form-select form-control form-select-sm">
+                            @foreach (var item in Role)
+                            {
+                                <option value="@item.Name">@item.Name</option>
+                            }
+
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <input type="submit" value="Save" class="btn-sm btn-primary" />
+            <MudButton Variant="Variant.Filled" Size="Size.Small" OnClick="CloseDlg" Color="Color.Secondary">Cancel</MudButton>
+        </EditForm>
+    </DialogContent>
+</MudDialog>
 
 
 @code {
+    bool dialogIsOpen = false;
     private bool Visibility { get; set; } = false;
     private UserModel user = new UserModel();
-    private async void OpenDialog()
+    private ObservableCollection<ApplicationUser> applicationUsers = new ObservableCollection<ApplicationUser>();
+
+    protected override async Task OnInitializedAsync()
     {
-        Visibility = true;
-        //Dictionary<string, object> data = null;
-        //await DialogService.OpenAsync<AddEmployee>("Order",data, new DialogOptions() { Width = "700px", Height = "570px", Resizable = true, Draggable = true });
-        ModalDialogResult result = await ModalDialog.ShowDialogAsync<AddEmployee>("ADD EMPLOYEE");
-        
+        _ = FetchRoles();
+        HttpClient httpClient = new HttpClient();
+        try
+        {
+            string criteria = "Employee";
+            string token = Preferences.Get("token", null);
+            httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+            var response = await httpClient.GetAsync("https://farm-web-api.herokuapp.com/api/Users/?role=" + criteria);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var str = await response.Content.ReadAsStringAsync();
+                applicationUsers = Newtonsoft.Json.JsonConvert.DeserializeObject<ObservableCollection<ApplicationUser>>(str);
+
+            }
+        }
+        catch (Exception)
+        {
+
+            throw;
+        }
+
+
+    }
+    private void OpenDlg()
+    {
+        dialogIsOpen = true;
+    }
+    private void CloseDlg()
+    {
+        dialogIsOpen = false;
     }
 
 
+    private List<Roles> Role = new List<Roles>();
+
+
+    private async Task FetchRoles()
+    {
+        var httpClient = new HttpClient();
+        try
+        {
+            var results = await httpClient.GetAsync("https://farm-web-api.herokuapp.com/api/Roles");
+            if (results.IsSuccessStatusCode)
+            {
+                var str = await results.Content.ReadAsStringAsync();
+                Role = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Roles>>(str);
+
+            }
+        }
+        catch (Exception)
+        {
+
+            throw;
+        }
+
+    }
+    private void SelectedItem(ChangeEventArgs e)
+    {
+        user.Role = e.Value.ToString();
+    }
+    private string error = "";
+    private async void Submit()
+    {
+        user.Username = user.Email;
+        user.Password = "ABcd@12345";
+
+        var jsone = Newtonsoft.Json.JsonConvert.SerializeObject(user);
+        var content = new StringContent(jsone, Encoding.UTF8, "application/json");
+        HttpClient httpClient = new HttpClient();
+        try
+        {
+            var response = await httpClient.PostAsync("https://farm-web-api.herokuapp.com/api/Account/register", content);
+            if (response.IsSuccessStatusCode)
+            {
+                AuthRespnse authRespnse = new AuthRespnse();
+                var str = await response.Content.ReadAsStringAsync();
+                authRespnse = Newtonsoft.Json.JsonConvert.DeserializeObject<AuthRespnse>(str);
+                applicationUsers.Add(authRespnse.ApplicationUser);
+               // await App.Current.MainPage.DisplayAlert("Success", "User has been successfully created", "Got it");
+                dialogIsOpen = false;
+                StateHasChanged();
+            }
+            else
+            {
+                error = await response.Content.ReadAsStringAsync();
+                await App.Current.MainPage.DisplayAlert("Error", error, "Got it");
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "Got it");
+        }
+        finally
+        {
+            //await InvokeAsync(StateHasChanged);
+        }
+
+
+    }
 
 }

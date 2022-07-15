@@ -1,11 +1,44 @@
-﻿@layout MainLayout
+﻿@layout DashboardLayout
 @page "/orders_page"
+@using MudBlazor
 <div class="card">
     <div class="card-header">
-        <h3>ORDERS</h3>
+        <h6>ORDERS</h6>
     </div>
     <div class="card-body">
-
+        <MudTabs Elevation="2" Rounded="true" Centered="false" Class="my-6" Color="Color.Dark">
+            <MudTabPanel Icon="@Icons.Material.Filled.Pending" Text="PENDING ORDERS" BadgeData="0" BadgeColor="Color.Error" >
+                <MudSimpleTable>
+                    <thead>
+                        <tr>
+                            <th>
+                                ORDER#
+                            </th>
+                            <th>
+                                FROM
+                            </th>
+                            <th>
+                                QUANTITY
+                            </th>
+                            <th>
+                                TOTAL PRICE
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </MudSimpleTable>
+            </MudTabPanel>
+            <MudTabPanel Icon="@Icons.Material.Filled.AccessTime" Text="Timing" BadgeDot="true" BadgeColor="Color.Error" >
+                sdfgh
+            </MudTabPanel>
+        </MudTabs>
     </div>
 </div>
 

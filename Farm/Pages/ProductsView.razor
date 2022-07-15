@@ -1,13 +1,19 @@
-﻿@layout MainLayout
+﻿@layout DashboardLayout
 @page "/products_page"
 @inject IJSRuntime JsRuntime
+
+
 <div class="card">
-    <div class="card-header">
-        <h3>PRODUCTS</h3>
+    <div class="card-header border-transparent">
+        <h3 class="card-title">Products</h3>
+
+        <div class="card-tools">
+            <a>Refresh</a>
+        </div>
     </div>
-    <div class="card-body">
-		<div>
-			<a class="btn btn-primary text-decoration-none" href="add_product">
+    <div class="card-body p-0">
+		<div class="m-1">
+			<a class="btn-sm btn-primary text-decoration-none" href="add_product">
 						<span class="oi oi-plus" aria-hidden="true"></span> ADD PRODUCT
 			</a>
 		</div>
@@ -18,7 +24,7 @@
 		else
 		{
 			<div class="table-responsive">
-				<table class="table">
+            <table class="table m-0">
 					<thead>
 						<tr>
 							<th>Id</th>
@@ -42,7 +48,7 @@
 								<td>@item.Quantity</td>
 								<td>
 									<button class="btn-sm btn-danger" @onclick="() => DeleteProduct(item)">Delete
-										<i class="fa fa-trash-o fa-lg"></i>
+										<i class="fa-solid fa-trash-list"></i>
 									</button>
 									
 								</td>
@@ -61,13 +67,12 @@
 
 
 @code {
-	List<Products> products = new ();
-	private string token = null;
+	private ObservableCollection<Products> products = new ();
+	 string token = Preferences.Get("token", null);
 	protected override async Task OnInitializedAsync()
 	{
-		token = Preferences.Get("token", null);
 		HttpClient httpClient = new HttpClient();
-		
+
 		httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
 		var response = await httpClient.GetAsync("https://farm-web-api.herokuapp.com/api/Products/");
 		if (response.IsSuccessStatusCode)
@@ -75,19 +80,32 @@
 			var data = await response.Content.ReadAsStringAsync();
 			if (data != null)
 			{
-				products = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Products>>(data);
+				products = Newtonsoft.Json.JsonConvert.DeserializeObject<ObservableCollection<Products>>(data);
 			}
 		}
 
-		
+
 	}
 	private async void DeleteProduct(Products product)
 	{
 		try
 		{
-			HttpClient httpClient = new HttpClient();
-			var response = await httpClient.DeleteAsync("https://farm-web-api.herokuapp.com/api/Products/" +product.ProductId.ToString());
-			await base.OnInitializedAsync();
+			if(await App.Current.MainPage.DisplayAlert("Confirm", $"Are you sure you want to delete this item:{product.Name}", "Yes", "No"))
+			{
+				HttpClient httpClient = new HttpClient();
+				httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+				var response = await httpClient.DeleteAsync("https://farm-web-api.herokuapp.com/api/Products/" +product.ProductId.ToString());
+				if (response.IsSuccessStatusCode)
+				{
+					products.Remove(product);
+				}
+				else
+				{
+					var error = await response.Content.ReadAsStringAsync();
+					await App.Current.MainPage.DisplayAlert("Confirm", $"Something Went Wrong:\n{error}", "Got it");
+				}
+			}
+			
 		}
 		catch (Exception ex)
 		{

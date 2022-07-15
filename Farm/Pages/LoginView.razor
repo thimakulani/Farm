@@ -1,10 +1,13 @@
 ﻿@page "/"
+@page "/login"
 @using Farm.Models
 @using System.Text
+@using MudBlazor
+@inject ISnackbar Snackbar
 @layout AuthanticationLayout
 
 
-<section class="vh-100" >
+<section class="vh-100">
     <div class="container py-5 h-100">
         <div class="row d-flex justify-content-center align-items-center h-100">
             <div class="col-12 col-md-8 col-lg-6 col-xl-5">
@@ -15,19 +18,22 @@
 
                         <EditForm Model="@user" OnValidSubmit="@Submit">
                             <DataAnnotationsValidator />
-                            <ValidationSummary  />
-                            <label>@error</label>
+                            <ValidationSummary />
+                            
                             <div class="form-group">
                                 <label>EMAIL</label>
-                                <InputText  class="form-control" @bind-Value="@user.Username" id="Username" />
+                                <InputText class="form-control" @bind-Value="@user.Username" id="Username" />
                             </div>
                             <div class="form-group">
                                 <label for="Name">PASSWORD</label>
-                                <RadzenPassword  class="form-control" @bind-Value="@user.Password" id="Password" />
+                                <RadzenPassword class="form-control" @bind-Value="@user.Password" id="Password" />
                             </div>
                             <div class="form-group">
-                                @*<RadzenButton @onclick="@Submit" >LOGIN</RadzenButton>*@
                                 <input type="submit" class="btn-sm btn-primary  form-control" value="LOGIN" />
+                               @* <div style="display:@loading" aria-valuemax="100" aria-valuemin="0" role="progressbar" class="rz-progressbar rz-progressbar-indeterminate rz-progressbar-indeterminate-primary" aria-valuenow="100" id="vqdp6SVaZk">
+                                    <div class="rz-progressbar-value rz-progressbar-value-animate" style="width: 100%;">
+                                    </div>
+                                </div>*@
                             </div>
                         </EditForm>
 
@@ -36,11 +42,21 @@
             </div>
         </div>
     </div>
+
+    <MatDialog @bind-IsOpen="@dialogIsOpen">
+            <MatDialogContent>
+            <MatProgressCircle Indeterminate="true" FourColored="true" />
+                <p>loading....</p>
+            </MatDialogContent>
+        </MatDialog>
+
+
 </section>
 
 @code {
-    UserLogin user = new UserLogin();
 
+    private bool dialogIsOpen = false;
+    UserLogin user = new UserLogin();
     string error;
     protected override void OnInitialized()
     {
@@ -57,25 +73,43 @@
 
         try
         {
-
+            dialogIsOpen = true;
             var results = await httpClient.PostAsync("https://farm-web-api.herokuapp.com/api/Account/login", data);
             if (results.IsSuccessStatusCode)
             {
-                string token = await results.Content.ReadAsStringAsync();
-                Preferences.Set("token", token);
+                string str_out = await results.Content.ReadAsStringAsync();
+                AuthRespnse authRespnse = new AuthRespnse();
+                authRespnse = Newtonsoft.Json.JsonConvert.DeserializeObject<AuthRespnse>(str_out);
+                Preferences.Set("token", authRespnse.Token);
+                Preferences.Set("id", authRespnse.ApplicationUser.Id);
                 NavigationManager.NavigateTo("index");
-
+                dialogIsOpen = false;
             }
             else
             {
-                error = await results.Content.ReadAsStringAsync();
+                if (results.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                {
+                    error = await results.Content.ReadAsStringAsync();
+                    Snackbar.Add(error, Severity.Error);
+                }
+                else
+                {
+                    error = await results.Content.ReadAsStringAsync();
+                    Snackbar.Add(error, Severity.Error);
+                }
+                Snackbar.Add(error, Severity.Error);
+                StateHasChanged();
+                dialogIsOpen = false;
             }
         }
         catch (HttpRequestException ex)
         {
             error = ex.Message;
         }
-
+        finally
+        {
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
 }

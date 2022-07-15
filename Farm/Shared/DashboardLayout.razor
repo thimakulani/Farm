@@ -1,0 +1,95 @@
+﻿@using MudBlazor
+@inherits LayoutComponentBase
+
+<MudThemeProvider />
+<MudDialogProvider FullWidth="true"
+                   MaxWidth="MaxWidth.Medium"
+                   CloseButton="true"
+                   DisableBackdropClick="true"
+                   NoHeader="true"
+                   Position="DialogPosition.Center"
+                   CloseOnEscapeKey="true" />
+<MudSnackbarProvider />
+<div class=" wrapper container-fluid row d-flex justify-content-center align-items-center h-100" style="overflow:visible !important;">
+    <div class="page">
+        <main>
+            <article class="content px-4">
+                <MudLayout Style="height:100%; width:100%">
+                    <MudAppBar Elevation="1">
+                        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+                        <MudAvatar Color="Color.Secondary">@UserName</MudAvatar>
+                        <MudSpacer />
+                        <MudBadge Content="0" Color="Color.Warning" Overlap="true" Class="mx-6 my-4">
+                            <MudIconButton Icon="@Icons.Material.Filled.Email" Color="Color.Inherit" Edge="Edge.End" />
+                        </MudBadge>
+                    </MudAppBar>
+                    <MudDrawer @bind-Open="_drawerOpen" Elevation="2" Variant="@DrawerVariant.Mini" OpenMiniOnHover="true">
+                        <MudNavMenu>
+                            <MudNavLink Icon="@Icons.Filled.Dashboard" Href="index" Match="NavLinkMatch.All">DASHBOARD</MudNavLink>
+                            <MudNavLink Href="orders_page" Icon="@Icons.Filled.ShoppingCart" Match="NavLinkMatch.Prefix">ORDERS</MudNavLink>
+                            <MudNavGroup Title="INVENTORY" Icon="@Icons.Filled.Inventory" Expanded="true">
+                                <MudNavLink Href="categories_page" Icon="@Icons.Filled.Category" Match="NavLinkMatch.Prefix">CATEGORIES</MudNavLink>
+                                <MudNavLink Href="products_page" Icon="@Icons.Filled.FoodBank" Match="NavLinkMatch.Prefix">PRODUCTS</MudNavLink>
+                            </MudNavGroup>
+                            <MudNavLink Href="customers_page" Icon="@Icons.Filled.People" Match="NavLinkMatch.Prefix">CUSTOMERS</MudNavLink>
+                            <MudNavLink Href="employees_page" Icon="@Icons.Filled.GroupWork" Match="NavLinkMatch.Prefix">EMPLOYEES</MudNavLink>
+                            <MudNavLink Href="drivers_page" Icon="@Icons.Filled.DriveFileMoveRtl" Match="NavLinkMatch.Prefix">DRIVERS</MudNavLink>
+                            <MudNavLink Href="#" Icon="@Icons.Filled.Report" Match="NavLinkMatch.Prefix">REPORT</MudNavLink>
+                        </MudNavMenu>
+                    </MudDrawer>
+                    <MudMainContent>
+
+
+                        <div class="ma-0" style="height:100vh;overflow: auto;">
+                            <MudPaper Elevation="0" Height="100vh" Class="d-flex flex-column justify-space-between py-6">
+                                @Body
+                            </MudPaper>
+                        </div>
+
+                    </MudMainContent>
+                </MudLayout>
+            </article>
+        </main>
+    </div>
+</div>
+
+
+
+
+@code {
+    bool _drawerOpen = true;
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+    private string UserName { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        HttpClient httpClient = new();
+        string token = Preferences.Get("token", null);
+        string id = Preferences.Get("id", null);
+        httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+        try
+        {
+            var response = await httpClient.GetAsync($"https://farm-web-api.herokuapp.com/api/Account/{id}");
+            if (response.IsSuccessStatusCode)
+            {
+                var results = await response.Content.ReadAsStringAsync();
+                ApplicationUser user = Newtonsoft.Json.JsonConvert.DeserializeObject<ApplicationUser>(results);
+                UserName = $"{user.FirstName[0]} {user.LastName[0]}";
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+
+            Console.WriteLine(ex.Message);
+        }
+    }
+    private void logout()
+    {
+        Preferences.Clear("token");
+        NavigationManager.NavigateTo("/login");
+    }
+}

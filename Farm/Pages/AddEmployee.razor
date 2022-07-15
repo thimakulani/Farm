@@ -1,8 +1,6 @@
-﻿
-@layout MainLayout
-
-
-<div class="simple-form">
+﻿@using MudBlazor
+<MudDialog>
+    <DialogContent>
     <EditForm Model="@user" OnValidSubmit="@Submit"> 
         <ValidationSummary />
         <DataAnnotationsValidator />
@@ -25,22 +23,21 @@
             <input @bind="user.Phone" type="text" class="form-control" id="phone" placeholder="Enter Phone Number" />
         </div>
         <div class="form-group">
-            <label for="role">Phone Number</label>
-            <select>
+            <label for="role">User Role</label>
+            <select @onchange="SelectedItem"  class="form-select form-select-sm mt-3">
                 @foreach (var item in Role)
                 {
-                    <option value="@item.Name" />
+                    <option value="@item.Name">@item.Name</option>
                 }
+
             </select>
         </div>
         <div class="form-group">
             <input type="submit" value="CREATE" class="btn-sm btn-primary form-control" />
         </div>
     </EditForm>
-
-    
-</div>
-
+        </DialogContent>
+</MudDialog>
 
 @code {
 
@@ -59,7 +56,14 @@
             var response = await httpClient.PostAsync("https://farm-web-api.herokuapp.com/api/Account/register", content);
             if (response.IsSuccessStatusCode)
             {
-                error = await response.Content.ReadAsStringAsync();
+                AuthRespnse authRespnse = new AuthRespnse();
+                var str = await response.Content.ReadAsStringAsync();
+                authRespnse = Newtonsoft.Json.JsonConvert.DeserializeObject<AuthRespnse>(str);
+
+                ModalDialogParameters returnParameters = new ModalDialogParameters();
+                returnParameters.Add("ApplicationUser", authRespnse.ApplicationUser);
+
+                
             }
             else
             {
@@ -73,11 +77,12 @@
 
 
     }
-    
+
     private List<Roles> Role = new List<Roles>();
-    protected async override void OnInitialized()
+
+
+    protected override async Task OnInitializedAsync()
     {
-        base.OnInitialized();
         var httpClient = new HttpClient();
         try
         {
@@ -86,14 +91,19 @@
             {
                 var str = await results.Content.ReadAsStringAsync();
                 Role = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Roles>>(str);
+                
             }
         }
         catch (Exception)
         {
-            
+
             throw;
         }
+        
+    }
 
-
+    private void SelectedItem(ChangeEventArgs e)
+    {
+        user.Role = e.Value.ToString();
     }
 }

@@ -1,6 +1,6 @@
 ﻿@page "/add_product"
 @using System.Text
-@layout MainLayout
+@layout DashboardLayout
 @inject IJSRuntime JsRuntime
 @inject NavigationManager NavigationManager
 
@@ -13,6 +13,7 @@
     <EditForm OnValidSubmit="@Submit" Model="@products">
     <DataAnnotationsValidator />
     <ValidationSummary />
+
     
     <div class="form-group">
         <label for="Name">Name</label>
@@ -21,9 +22,7 @@
 
     <div class="form-group">
         <label for="Type">SELECT CATEGORY</label>
-        
-
-        <select id="category" required name="category" @onchange="SelectedItem"  class="form-select form-select-sm mt-3">
+                <select id="category" required name="category" @onchange="SelectedItem" class="form-control select2" style="width: 100%;">
             @foreach (var state in category)
             {
                 <option  value="@state.Id">@state.Name</option>
@@ -64,19 +63,20 @@
         }
         products.CategoryId = category_id;
         //var x = category.Find(d => d.Id == category_id);
-
+        string token = Preferences.Get("token", null);
         HttpClient httpClient = new HttpClient();
-
+        httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
         var json = Newtonsoft.Json.JsonConvert.SerializeObject(products);
         var response = await httpClient.PostAsync("https://farm-web-api.herokuapp.com/api/Products/", new StringContent(json, Encoding.UTF8, "application/json"));
         if (response.IsSuccessStatusCode)
         {
             var msg = response.Content.ReadAsStringAsync();
+            
             NavigationManager.NavigateTo("products_page");
+
         }
         else{
             var str_out = await response.Content.ReadAsStringAsync();
-            await JsRuntime.InvokeVoidAsync("Error", $"{str_out}");
         }
 
     }
@@ -94,6 +94,10 @@
     private void SelectedItem(ChangeEventArgs e)
     {
         category_id = Convert.ToInt32(e.Value.ToString());
-       // await JsRuntime.InvokeVoidAsync("Error", $"{category_id}");
+        // await JsRuntime.InvokeVoidAsync("Error", $"{category_id}");
+    }
+    void AnyMethod()
+    {
+        Toastr.Show(Blazor.Toastr.Enums.ToastrType.Success, "This is a success message", "Title");
     }
 }

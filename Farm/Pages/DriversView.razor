@@ -1,15 +1,75 @@
 ﻿@layout DashboardLayout
 @page "/drivers_page"
-<div class="card">
-    <div class="card-header">
-        <h3>DRIVERS</h3>
-    </div>
+@using MudBlazor
+<div style="height:100vh">
     <div class="card-body">
+        <div class="col-12">
+            <div class="card" style="height:100vh">
+                <!-- /.card-header -->
+                <div class="card-body table-responsive p-0">
+                    <MudSimpleTable Hover="true" Dense="true" FixedHeader="true" Elevation="4" Style="overflow-x: auto; height:80vh">
+                        <thead>
+                            <tr>
+                                <td>Firstname</td>
+                                <td>Lastname</td>
+                                <td>Email</td>
+                                <td>Phone Number</td>
+                                <td>Role</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            
+                            @foreach (var context in applicationUsers)
+                            {
+                                <tr>
+                                    <td>@context.FirstName</td>
+                                    <td>@context.LastName</td>
+                                    <td>@context.Email</td>
+                                    <td>@context.PhoneNumber</td>
+                                    <td>@context.RoleName</td>
+                                </tr>
+                            }
+                        </tbody>
+                       
+                    </MudSimpleTable>
+
+                  
+                </div>
+                <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+        </div>
+
 
     </div>
+
 </div>
 
 
 @code {
+    private ObservableCollection<ApplicationUser> applicationUsers = new ObservableCollection<ApplicationUser>();
 
+    protected override async Task OnInitializedAsync()
+    {
+        HttpClient httpClient = new HttpClient();
+        try
+        {
+            string criteria = "Driver";
+            string token = Preferences.Get("token", null);
+            httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+            var response = await httpClient.GetAsync("https://farm-web-api.herokuapp.com/api/Users/?role=" + criteria);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var str = await response.Content.ReadAsStringAsync();
+                applicationUsers = Newtonsoft.Json.JsonConvert.DeserializeObject<ObservableCollection<ApplicationUser>>(str);
+            }
+        }
+        catch (Exception)
+        {
+
+            throw;
+        }
+    }
 }

@@ -7,51 +7,60 @@
 @layout AuthanticationLayout
 
 
-<section class="vh-100">
-    <div class="container py-5 h-100">
-        <div class="row d-flex justify-content-center align-items-center h-100">
-            <div class="col-12 col-md-8 col-lg-6 col-xl-5">
-                <div class="card shadow-2-strong" style="border-radius: 1rem;">
-                    <div class="card-body p-5">
+<div class="hold-transition login-page">
 
-                        <h3 class="mb-5">Sign in</h3>
-
-                        <EditForm Model="@user" OnValidSubmit="@Submit">
-                            <DataAnnotationsValidator />
-                            <ValidationSummary />
-                            
-                            <div class="form-group">
-                                <label>EMAIL</label>
-                                <InputText class="form-control" @bind-Value="@user.Username" id="Username" />
+    <div class="login-box">
+        <!-- /.login-logo -->
+        <div class="card">
+            <div class="card-body login-card-body">
+                <p class="login-box-msg">Sign in to start your session</p>
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <EditForm Model="@user" OnValidSubmit="@Submit">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                    <div class="input-group mb-3">
+                         <InputText class="form-control" @bind-Value="@user.Username" id="Username" />
+                        <div class="input-group-append">
+                            <div class="input-group-text">
+                                <span class="fas fa-envelope"></span>
                             </div>
-                            <div class="form-group">
-                                <label for="Name">PASSWORD</label>
-                                <RadzenPassword class="form-control" @bind-Value="@user.Password" id="Password" />
-                            </div>
-                            <div class="form-group">
-                                <input type="submit" class="btn-sm btn-primary  form-control" value="LOGIN" />
-                               @* <div style="display:@loading" aria-valuemax="100" aria-valuemin="0" role="progressbar" class="rz-progressbar rz-progressbar-indeterminate rz-progressbar-indeterminate-primary" aria-valuenow="100" id="vqdp6SVaZk">
-                                    <div class="rz-progressbar-value rz-progressbar-value-animate" style="width: 100%;">
-                                    </div>
-                                </div>*@
-                            </div>
-                        </EditForm>
-
+                        </div>
                     </div>
-                </div>
+                    <div class="input-group mb-3">
+                         <RadzenPassword class="form-control" @bind-Value="@user.Password" id="Password" />
+                        <div class="input-group-append">
+                            <div class="input-group-text">
+                                <span class="fas fa-lock"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /.col -->
+                    <input type="submit" class="btn-sm btn-primary  form-control" value="LOGIN" />
+                    <!-- /.col -->
+                </EditForm>
+                <!-- /.social-auth-links -->
+                <p class="mb-1">
+                    <a asp-action="ResertPassword">I forgot my password</a>
+                </p>
+                <p class="mb-0">
+                    @*<a href="register.html" class="text-center">Register a new membership</a>*@
+                </p>
             </div>
+            <!-- /.login-card-body -->
         </div>
     </div>
-
+</div>
     <MatDialog @bind-IsOpen="@dialogIsOpen">
             <MatDialogContent>
-            <MatProgressCircle Indeterminate="true" FourColored="true" />
-                <p>loading....</p>
+                <div class="form-inline"> 
+                    <MatProgressCircle Indeterminate="true" FourColored="true" />
+                    <p>loading....</p>
+                </div>
             </MatDialogContent>
         </MatDialog>
 
 
-</section>
+
 
 @code {
 

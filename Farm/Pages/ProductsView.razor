@@ -50,7 +50,9 @@
 									<button class="btn-sm btn-danger" @onclick="() => DeleteProduct(item)">Delete
 										<i class="fa-solid fa-trash-list"></i>
 									</button>
-									
+									<button class="btn-sm btn-success" @onclick="() => AddToCartProduct(item)">Add
+										<i class="fa-solid fa-trash-list"></i>
+									</button>
 								</td>
 							</tr>
 						}
@@ -68,7 +70,7 @@
 
 @code {
 	private ObservableCollection<Products> products = new ();
-	 string token = Preferences.Get("token", null);
+	string token = Preferences.Get("token", null);
 	protected override async Task OnInitializedAsync()
 	{
 		HttpClient httpClient = new HttpClient();
@@ -85,6 +87,10 @@
 		}
 
 
+	}
+	private void AddToCartProduct(Products product)
+	{
+		
 	}
 	private async void DeleteProduct(Products product)
 	{
